@@ -1,0 +1,25 @@
+# Virtual environments
+env/
+.venv/
+myenv/
+
+# Python cache & compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Git & IDE configs
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Jupyter notebooks & raw training data
+*.ipynb
+.ipynb_checkpoints/
+train.csv
+
+# System junk
+.DS_Store
+Thumbs.db
