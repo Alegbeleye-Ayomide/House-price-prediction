@@ -1,67 +1,97 @@
-import streamlit as st
 import requests
-
+import streamlit as st
 
 API_URL = "http://127.0.0.1:8000/predict"
-st.title('House price predictor')
-st.markdown('enter your home specifications below:')
 
-house_age = st.number_input('house age in years', min_value = 1)
-GarageCars = st.number_input('GarageCars', min_value = 0)
-GarageArea =  st.number_input('GarageArea', min_value = 0)
-OverallQual =  st.selectbox('over all quality of the house', options = [1,2,3,4,5,6,7,8,9,10])
-OverallCond = st.selectbox('overall condition of the house', options = [1,2,3,4,5,6,7,8,9,10])
-Fireplaces = st.number_input('number of fireplaces', min_value = 0)
-total_bath = st.number_input('number of bath rooms', min_value = 0)
+st.set_page_config(page_title="House Price Predictor", page_icon="🏠")
+st.title(" House Price Predictor")
+st.markdown("Enter property details below to calculate an estimated price:")
 
-KitchenQual = st.selectbox('kitchen quality', options = ["Gd", "TA", "Fa", "Ex"])
-ExterQual = st.selectbox('Exterior quality', options = ["Gd", "TA", "Fa", "Ex"])
-Neighborhood = st.selectbox('Neighbourhood of house', options= ["CollgCr", "Veenker", "Crawfor", "NoRidge", "Mitchel", "Somerst",
-            "NWAmes", "OldTown", "BrkSide", "Sawyer", "NAmes", "SawyerW",
-            "NridgHt", "IDOTRR", "MeadowV", "Timber", "Gilbert", "ClearCr",
-            "Edwards", "NPkVill", "StoneBr", "Blmngtn", "BrDale", "SWISU",
-            "Blueste"])
-total_sqft = st.number_input('total space of the home in square feet', min_value = 1)
+# Grid layout for inputs
+col1, col2 = st.columns(2)
 
+with col1:
+    LotArea = st.number_input(
+        "Lot Area (sq ft)", min_value=100.0, value=8450.0, step=100.0
+    )
+    total_sqft = st.number_input(
+        "Total Space (sq ft)", min_value=100.0, value=1710.0, step=50.0
+    )
+    house_age = st.number_input(
+        "House Age (years)", min_value=0.0, value=20.0, step=1.0
+    )
+    GarageCars = st.number_input(
+        "Garage Capacity (cars)", min_value=0, value=2, step=1
+    )
+    KitchenAbvGr = st.number_input(
+        "Kitchens Above Ground", min_value=1, value=1, step=1
+    )
 
-# Assemble payload (ensure key names match Pydantic schema exactly)
-input_data = {
-    'house_age': house_age,
-    'GarageCars': GarageCars,
-    'GarageArea': GarageArea,
-    'OverallQual': OverallQual,
-    'OverallCond': OverallCond,
-    'Fireplaces': Fireplaces,
-    'total_bath': total_bath,
-    'KitchenQual': KitchenQual,
-    'ExterQual': ExterQual,
-    'Neighborhood': Neighborhood,  
-    'total_sqft': total_sqft,      
-}
+with col2:
+    OverallQual = st.selectbox(
+        "Overall Quality (1-10)", options=list(range(1, 11)), index=6
+    )
+    OverallCond = st.selectbox(
+        "Overall Condition (1-10)", options=list(range(1, 11)), index=4
+    )
+    total_bath = st.number_input(
+        "Total Bathrooms", min_value=0.0, value=2.5, step=0.5
+    )
+    MSZoning = st.selectbox(
+        "MS Zoning", options=["RL", "RM", "FV", "RH", "C (all)"]
+    )
+    Neighborhood = st.selectbox(
+        "Neighborhood",
+        options=[
+            "Blueste",
+            "BrDale",
+            "BrkSide",
+            "ClearCr",
+            "CollgCr",
+            "Crawfor",
+            "Edwards",
+            "Gilbert",
+            "IDOTRR",
+            "MeadowV", "Mitchel",
+            "NAmes",
+            "NPkVill",
+            "NWAmes",
+            "NoRidge",
+            "NridgHt",
+            "OldTown",
+            "SWISU",
+            "Sawyer",
+            "SawyerW",
+            "Somerst",
+            "StoneBr",
+            "Timber",
+            "Veenker",
+        ],
+    )
 
-# Ensure st.button triggers the request
-if st.button("Predict Price"):
+st.markdown("---")
+
+if st.button("Predict Price", type="secondary"):
+    # Payload keys match FastAPI backend schema exactly
     input_data = {
-    'house_age': house_age,
-    'GarageCars': GarageCars,
-    'GarageArea': GarageArea,
-    'OverallQual': OverallQual,
-    'OverallCond': OverallCond,
-    'Fireplaces': Fireplaces,
-    'total_bath': total_bath,
-    'KitchenQual': KitchenQual,
-    'ExterQual': ExterQual,
-    'Neighborhood': Neighborhood,  #
-    'total_sqft': total_sqft,      
-}
+        "LotArea": LotArea,
+        "OverallQual": OverallQual,
+        "OverallCond": OverallCond,
+        "KitchenAbvGr": KitchenAbvGr,
+        "GarageCars": GarageCars,
+        "house_age": house_age,
+        "total_sqft": total_sqft,
+        "total_bath": total_bath,
+        "MSZoning": MSZoning,
+        "Neighborhood": Neighborhood,
+    }
 
     try:
         response = requests.post(API_URL, json=input_data)
         if response.status_code == 200:
             result = response.json()
-            st.success(f"Predicted Price: ${result['predicted_price']:,.2f}")
+            st.success(f"### Predicted Price: **${result['predicted_price']:,.2f}**")
         else:
             st.error(f"Error {response.status_code}: {response.text}")
     except requests.exceptions.RequestException as e:
         st.error(f"Failed to connect to the FastAPI server: {e}")
-
